@@ -17,6 +17,7 @@
 
 import ipaddress
 import aiohttp
+from aiohttp.payload import AsyncIterablePayload
 import asyncio
 import async_timeout
 import socket
@@ -497,11 +498,13 @@ class Compute:
                 elif isinstance(data, aiohttp.streams.EmptyStreamReader):
                     data = None
                 # Stream the request
-                elif isinstance(data, aiohttp.streams.StreamReader) or isinstance(data, bytes):
+                elif isinstance(data, aiohttp.streams.StreamReader):
+                    # Set size of chunks to 4KiB
+                    data=AsyncIterablePayload(data.iter_chunked(4096))
                     chunked = True
                     headers['content-type'] = 'application/octet-stream'
                 # If the data is an open file we will iterate on it
-                elif isinstance(data, io.BufferedIOBase):
+                elif isinstance(data, io.BufferedIOBase) or isinstance(data, bytes):
                     chunked = True
                     headers['content-type'] = 'application/octet-stream'
                 else:
