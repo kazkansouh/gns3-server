@@ -304,7 +304,6 @@ class DockerVM(BaseNode):
             "Tty": True,
             "OpenStdin": True,
             "StdinOnce": False,
-            "User": "root",
             "HostConfig": {
                 "CapAdd": ["ALL"],
                 "Privileged": True,
@@ -313,7 +312,7 @@ class DockerVM(BaseNode):
             "Volumes": {},
             "Env": ["container=docker"],  # Systemd compliant: https://github.com/GNS3/gns3-server/issues/573
             "Cmd": [],
-            "Entrypoint": image_infos.get("Config", {"Entrypoint": []})["Entrypoint"]
+            "Entrypoint": image_infos.get("Config", {"Entrypoint": []}).get("Entrypoint")
         }
 
         if params["Entrypoint"] is None:
@@ -324,7 +323,7 @@ class DockerVM(BaseNode):
             except ValueError as e:
                 raise DockerError("Invalid start command '{}': {}".format(self._start_command, e))
         if len(params["Cmd"]) == 0:
-            params["Cmd"] = image_infos.get("Config", {"Cmd": []})["Cmd"]
+            params["Cmd"] = image_infos.get("Config", {"Cmd": []}).get("Cmd")
             if params["Cmd"] is None:
                 params["Cmd"] = []
         if len(params["Cmd"]) == 0 and len(params["Entrypoint"]) == 0:
@@ -337,7 +336,9 @@ class DockerVM(BaseNode):
         params["Env"].append("GNS3_VOLUMES={}".format(":".join(self._volumes)))
 
         # Pass user configured for image to init script
-        params["Env"].append("GNS3_USER={}".format(image_infos.get("Config", {"User": ""})["User"]))
+        if image_infos.get("Config", {"User": ""}).get("User"):
+            params["User"] = "root"
+            params["Env"].append("GNS3_USER={}".format(image_infos.get("Config", {"User": ""})["User"]))
 
         variables = self.project.variables
         if not variables:
