@@ -304,6 +304,7 @@ class DockerVM(BaseNode):
             "Tty": True,
             "OpenStdin": True,
             "StdinOnce": False,
+            "User": "root",
             "HostConfig": {
                 "CapAdd": ["ALL"],
                 "Privileged": True,
@@ -334,6 +335,9 @@ class DockerVM(BaseNode):
         params["Env"].append("GNS3_MAX_ETHERNET=eth{}".format(self.adapters - 1))
         # Give the information to the container the list of volume path mounted
         params["Env"].append("GNS3_VOLUMES={}".format(":".join(self._volumes)))
+
+        # Pass user configured for image to init script
+        params["Env"].append("GNS3_USER={}".format(image_infos.get("Config", {"User": ""})["User"]))
 
         variables = self.project.variables
         if not variables:
